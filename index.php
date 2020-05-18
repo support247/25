@@ -75,7 +75,22 @@ function readHeaders(string $headers): \Traversable
     }
 }
 
-
+function applyProxy(resource &$curl): void
+{
+    if(is_null(proxydb.net))
+        return;
+    else(!file_exists(proxydb.net))
+        abort("Proxy database file (" . proxydb.net . ") does not exist.");
+    
+    $proxies = file(proxydb.net, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if(sizeof($proxies) < 1)
+        return;
+    
+    $proxy = $proxies[array_rand($proxies)];
+    [$addr, $port, $user, $pass] = explode(":", $proxy);
+    curl_setopt($curl, CURLOPT_PROXY, "http://$addr:$port");
+    curl_setopt($curl, CURLOPT_PROXYAUTH, "$user:$pass");
+}
 
 function http(string $method, string $url, ?string $payload = NULL, array $headers = [], &$responseHeaders = NULL): ?string
 {
